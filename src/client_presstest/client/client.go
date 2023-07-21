@@ -13,11 +13,11 @@ import (
 	"github.com/xi123/libgo/logs"
 	"github.com/xi123/libgo/utils/packet"
 	"github.com/xi123/libgo/utils/timestamp"
-	"github.com/cwloo/presstest/src/client_presstest/global"
-	"github.com/cwloo/presstest/src/client_presstest/handler"
-	"github.com/cwloo/presstest/src/client_presstest/service"
-	gamecomm "github.com/cwloo/server/proto/game.comm"
-	gameserv "github.com/cwloo/server/proto/game.serv"
+	"github.com/xi123/presstest/src/client_presstest/global"
+	"github.com/xi123/presstest/src/client_presstest/handler"
+	"github.com/xi123/presstest/src/client_presstest/service"
+	gamecomm "github.com/xi123/server/proto/game.comm"
+	gameserv "github.com/xi123/server/proto/game.serv"
 	"google.golang.org/protobuf/proto"
 )
 

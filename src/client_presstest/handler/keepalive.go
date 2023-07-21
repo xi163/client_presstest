@@ -5,7 +5,7 @@ import (
 
 	"github.com/xi123/libgo/core/net/conn"
 	"github.com/xi123/libgo/utils/packet"
-	gamecomm "github.com/cwloo/server/proto/game.comm"
+	gamecomm "github.com/xi123/server/proto/game.comm"
 	"google.golang.org/protobuf/proto"
 )
 

@@ -5,7 +5,7 @@ import (
 	"github.com/xi123/libgo/core/cb"
 	"github.com/xi123/libgo/core/net/conn"
 	"github.com/xi123/libgo/logs"
-	"github.com/cwloo/presstest/src/client_presstest/logic"
+	"github.com/xi123/presstest/src/client_presstest/logic"
 )
 
 type smain struct {

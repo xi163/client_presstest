@@ -1,10 +1,10 @@
-module github.com/cwloo/presstest
+module github.com/xi123/presstest
 
 go 1.19
 
 require (
 	github.com/xi123/libgo v0.0.0
-	github.com/cwloo/server v0.0.0
+	github.com/xi123/server v0.0.0
 	google.golang.org/protobuf v1.28.1
 )
 

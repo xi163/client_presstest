@@ -8,11 +8,11 @@ import (
 	"github.com/xi123/libgo/logs"
 	"github.com/xi123/libgo/utils/json"
 	"github.com/xi123/libgo/utils/packet"
-	"github.com/cwloo/presstest/src/client_presstest/global"
-	"github.com/cwloo/presstest/src/client_presstest/handler"
-	gamehall "github.com/cwloo/server/proto/game.hall"
-	gameserv "github.com/cwloo/server/proto/game.serv"
-	s13s "github.com/cwloo/server/proto/s13s"
+	"github.com/xi123/presstest/src/client_presstest/global"
+	"github.com/xi123/presstest/src/client_presstest/handler"
+	gamehall "github.com/xi123/server/proto/game.hall"
+	gameserv "github.com/xi123/server/proto/game.serv"
+	s13s "github.com/xi123/server/proto/s13s"
 	"google.golang.org/protobuf/proto"
 )
 

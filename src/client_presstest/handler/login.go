@@ -6,8 +6,8 @@ import (
 	"github.com/xi123/libgo/core/net/conn"
 	"github.com/xi123/libgo/logs"
 	"github.com/xi123/libgo/utils/packet"
-	gamecomm "github.com/cwloo/server/proto/game.comm"
-	gamehall "github.com/cwloo/server/proto/game.hall"
+	gamecomm "github.com/xi123/server/proto/game.comm"
+	gamehall "github.com/xi123/server/proto/game.hall"
 )
 
 // 登陆游戏大厅

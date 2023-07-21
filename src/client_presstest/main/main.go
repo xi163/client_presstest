@@ -6,11 +6,11 @@ import (
 
 	"github.com/xi123/libgo/logs"
 	"github.com/xi123/libgo/utils/conv"
-	"github.com/cwloo/presstest/src/client_presstest/client"
-	"github.com/cwloo/presstest/src/client_presstest/entry"
-	"github.com/cwloo/presstest/src/client_presstest/global"
-	"github.com/cwloo/presstest/src/client_presstest/handler"
-	"github.com/cwloo/presstest/src/client_presstest/service"
+	"github.com/xi123/presstest/src/client_presstest/client"
+	"github.com/xi123/presstest/src/client_presstest/entry"
+	"github.com/xi123/presstest/src/client_presstest/global"
+	"github.com/xi123/presstest/src/client_presstest/handler"
+	"github.com/xi123/presstest/src/client_presstest/service"
 )
 
 func ParallLoginRequest() {

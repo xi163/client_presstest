@@ -16,7 +16,7 @@ import (
 	"github.com/xi123/libgo/utils/safe"
 	"github.com/xi123/libgo/utils/sign"
 	"github.com/xi123/libgo/utils/validator"
-	"github.com/cwloo/presstest/src/client_presstest/global"
+	"github.com/xi123/presstest/src/client_presstest/global"
 )
 
 func BuildPlatLogin(account string, Type int) (key, param string) {
