@@ -3,12 +3,12 @@ package handler
 import (
 	"strconv"
 
-	"github.com/xi123/libgo/core/net/conn"
-	"github.com/xi123/libgo/logs"
-	"github.com/xi123/libgo/utils/packet"
-	"github.com/xi123/presstest/src/client_presstest/global"
-	gamecomm "github.com/xi123/server/proto/game.comm"
-	gameserv "github.com/xi123/server/proto/game.serv"
+	"github.com/xi163/libgo/core/net/conn"
+	"github.com/xi163/libgo/logs"
+	"github.com/xi163/libgo/utils/packet"
+	"github.com/xi163/presstest/src/client_presstest/global"
+	gamecomm "github.com/xi163/server/proto/game.comm"
+	gameserv "github.com/xi163/server/proto/game.serv"
 )
 
 func ReqEnterRoom(peer conn.Session, gameId, roomId int32, pwd []byte) {

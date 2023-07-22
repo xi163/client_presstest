@@ -1,9 +1,9 @@
 package entry
 
 import (
-	"github.com/xi123/libgo/core/base/run"
-	"github.com/xi123/libgo/core/base/run/cell"
-	"github.com/xi123/libgo/core/net/conn"
+	"github.com/xi163/libgo/core/base/run"
+	"github.com/xi163/libgo/core/base/run/cell"
+	"github.com/xi163/libgo/core/net/conn"
 )
 
 type sentry struct {

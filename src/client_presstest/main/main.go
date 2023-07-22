@@ -1,16 +1,16 @@
 package main
 
 import (
-	"sync"
 	"time"
 
-	"github.com/xi123/libgo/logs"
-	"github.com/xi123/libgo/utils/conv"
-	"github.com/xi123/presstest/src/client_presstest/client"
-	"github.com/xi123/presstest/src/client_presstest/entry"
-	"github.com/xi123/presstest/src/client_presstest/global"
-	"github.com/xi123/presstest/src/client_presstest/handler"
-	"github.com/xi123/presstest/src/client_presstest/service"
+	"github.com/xi163/libgo/logs"
+	"github.com/xi163/libgo/utils/conv"
+	"github.com/xi163/libgo/utils/signal_handler"
+	"github.com/xi163/presstest/src/client_presstest/client"
+	"github.com/xi163/presstest/src/client_presstest/entry"
+	"github.com/xi163/presstest/src/client_presstest/global"
+	"github.com/xi163/presstest/src/client_presstest/handler"
+	"github.com/xi163/presstest/src/client_presstest/service"
 )
 
 func ParallLoginRequest() {
@@ -50,12 +50,10 @@ func ParallLoginRequest() {
 	}()
 }
 
-var wg sync.WaitGroup
-
 func main() {
-	wg.Add(1)
 	service.Main.Add(time.Second, entry.NewSentryCreator(), 0, 10)
 	ParallLoginRequest()
-	wg.Wait()
-	logs.Close()
+	signal_handler.Wait(func() {
+		logs.Close()
+	})
 }
