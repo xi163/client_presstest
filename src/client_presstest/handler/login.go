@@ -3,11 +3,11 @@ package handler
 import (
 	"strconv"
 
-	"github.com/xi163/libgo/core/net/conn"
-	"github.com/xi163/libgo/logs"
-	"github.com/xi163/libgo/utils/packet"
-	gamecomm "github.com/xi163/server/proto/game.comm"
-	gamehall "github.com/xi163/server/proto/game.hall"
+	"github.com/cwloo/gonet/core/net/conn"
+	"github.com/cwloo/gonet/logs"
+	"github.com/cwloo/gonet/utils/packet"
+	gamecomm "github.com/cwloo/server/proto/game.comm"
+	gamehall "github.com/cwloo/server/proto/game.hall"
 )
 
 // 登陆游戏大厅

@@ -1,9 +1,9 @@
 package entry
 
 import (
-	"github.com/xi163/libgo/core/base/run"
-	"github.com/xi163/libgo/core/base/run/cell"
-	"github.com/xi163/libgo/core/net/conn"
+	"github.com/cwloo/gonet/core/base/run"
+	"github.com/cwloo/gonet/core/base/run/cell"
+	"github.com/cwloo/gonet/core/net/conn"
 )
 
 type sentry struct {
@@ -12,13 +12,21 @@ type sentry struct {
 }
 
 func newsentry(c run.Proc) cell.Worker {
-	p := &sentry{}
-	p.main = newsmain(c)
-	return p
+	return &sentry{
+		main: newsmain(c),
+	}
 }
 
 func (s *sentry) OnInit() {
 	s.main.initModuleHandlers()
+}
+
+func (s *sentry) OnConnected(peer conn.Session, v ...any) {
+	s.main.onConnected(peer, v...)
+}
+
+func (s *sentry) OnClosed(peer conn.Session, reason conn.Reason, v ...any) {
+	s.main.onClosed(peer, reason, v...)
 }
 
 func (s *sentry) OnRead(cmd uint32, msg any, peer conn.Session) {
@@ -37,7 +45,7 @@ type SentryCreator struct {
 	cell.NetWorkerCreator
 }
 
-func NewSentryCreator() *SentryCreator {
+func NewSentryCreator() cell.WorkerCreator {
 	return &SentryCreator{}
 }
 

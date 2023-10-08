@@ -1,18 +1,24 @@
 package logic
 
 import (
-	"github.com/xi163/libgo/core/base/run"
-	"github.com/xi163/libgo/core/base/task"
-	"github.com/xi163/libgo/core/cb"
-	"github.com/xi163/libgo/core/net/conn"
-	"github.com/xi163/libgo/logs"
-	"github.com/xi163/libgo/utils/json"
-	"github.com/xi163/libgo/utils/packet"
-	"github.com/xi163/presstest/src/client_presstest/global"
-	"github.com/xi163/presstest/src/client_presstest/handler"
-	gamehall "github.com/xi163/server/proto/game.hall"
-	gameserv "github.com/xi163/server/proto/game.serv"
-	s13s "github.com/xi163/server/proto/s13s"
+	"time"
+
+	"github.com/cwloo/gonet/core/base/run"
+	"github.com/cwloo/gonet/core/base/task"
+	"github.com/cwloo/gonet/core/cb"
+	"github.com/cwloo/gonet/core/net/conn"
+	"github.com/cwloo/gonet/logs"
+	"github.com/cwloo/gonet/utils/json"
+	"github.com/cwloo/gonet/utils/packet"
+	"github.com/cwloo/gonet/utils/safe"
+	"github.com/cwloo/presstest/src/client_presstest/handler"
+	"github.com/cwloo/presstest/src/config"
+	"github.com/cwloo/presstest/src/global"
+	gamecomm "github.com/cwloo/server/proto/game.comm"
+	gamehall "github.com/cwloo/server/proto/game.hall"
+	gamehallclub "github.com/cwloo/server/proto/game.hallclub"
+	gameserv "github.com/cwloo/server/proto/game.serv"
+	s13s "github.com/cwloo/server/proto/s13s"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -111,7 +117,189 @@ func (s *Player) OnTimer(timerID uint32, dt int32, args any) bool {
 	return true
 }
 
+func (s *Player) resultPlayerGetMyClubListHall(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamehallclub.GetMyClubHallMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+		ctx := peer.GetContext("ctx").(*global.Ctx)
+		if len(rspdata.ClubInfos) > 0 {
+			ctx.ClubId = rspdata.ClubInfos[0].ClubId
+			handler.ReqGameListInfoClub(peer, ctx.UserId, ctx.ClubId)
+		} else {
+			task.After(time.Duration(config.Config.Client.Interval[3])*time.Second, cb.NewFunctor10(func(args any) {
+				handler.ReqGetMyClubListHall(peer, args.(int64))
+			}, ctx.UserId))
+		}
+		//handler.ReqInviteJoinClub(peer, 256896, 10120)
+		//handler.ReqInviteJoinClub(peer, 256896, 10125)
+		//handler.ReqInviteJoinClub(peer, 256896, 10126)
+		//handler.ReqInviteJoinClub(peer, 256896, 10131)
+		// handler.ReqCreateClub(peer, "伯爵俱乐部", 50, 70)
+		// handler.ReqCreateClub(peer, "伯爵俱乐部1", 50, 70)
+		// handler.ReqCreateClub(peer, "伯爵俱乐部2", 50, 70)
+		// handler.ReqCreateClub(peer, "伯爵俱乐部3", 50, 70)
+		// handler.ReqFireClubUser(peer, 256896, 10125)
+		// handler.ReqInviteJoinClub(peer, 256896, 10125)
+	}
+}
+
+func (s *Player) resultPlayerCreateClub(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamehallclub.CreateClubMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+	}
+}
+
+func (s *Player) resultPlayerJoinClub(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamehallclub.JoinTheClubMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+	}
+}
+
+func (s *Player) resultPlayerExitClub(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamehallclub.ExitTheClubMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+	}
+}
+
+func (s *Player) resultPlayerFireClubUser(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamehallclub.FireMemberMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+	}
+}
+
+// 异地登陆被踢下线
+func (s *Player) resultPlayerShutDownNotify(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamecomm.ProxyNotifyShutDownUserClientMessage{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+		ctx := peer.GetContext("ctx").(*global.Ctx)
+		ctx.Shutdown = true
+	}
+}
+
+func (s *Player) resultPlayerOrderScoreNotify(msg any, peer conn.Session) {
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamecomm.ProxyNotifyOrderScoreMessage{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+	}
+}
+
+// 请求服务不可用 发送失败
+func (s *Player) resultPlayerSendFailedNotify(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamecomm.ProxyNotifyFailedMessage{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+		mainId := rspdata.MainId
+		subId := rspdata.SubId
+		ctx := peer.GetContext("ctx").(*global.Ctx)
+		if mainId == int32(gamecomm.MAINID_MAIN_MESSAGE_CLIENT_TO_GAME_SERVER) &&
+			subId == int32(gameserv.SUBID_SUB_C2S_ENTER_ROOM_REQ) {
+			task.After(time.Duration(config.Config.Client.Interval[1])*time.Second, cb.NewFunctor10(func(args any) {
+				handler.ReqPlayingGameInfo(peer, args.(int64))
+			}, ctx.UserId))
+		} else if mainId == int32(gamecomm.MAINID_MAIN_MESSAGE_CLIENT_TO_HALL) &&
+			subId == int32(gamecomm.MESSAGE_CLIENT_TO_HALL_SUBID_CLIENT_TO_HALL_LOGIN_MESSAGE_REQ) {
+			task.After(time.Duration(config.Config.Client.Interval[1])*time.Second, cb.NewFunctor00(func() {
+				handler.SendGameLogin(peer, ctx.Token)
+			}))
+		}
+	}
+}
+
+// 游戏结束 被清出桌子
+func (s *Player) resultPlayerGameEndNotify(msg any, peer conn.Session) {
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gameserv.MSG_S2C_UserEnterMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", &rspdata)
+		//if rspdata.RetCode == 0 {
+		//	 handler.ReqPlayerReady(peer)
+		//} else {
+		// task.After(global.Interval, cb.NewFunctor00(func() {
+		// 	handler.ReqGameserverInfo(peer,
+		// 		global.GGames.ByName["十三水"].ID,
+		// 		global.GGames.ByName["十三水"].ByName["体验房"])
+		// }))
+		//}
+	}
+}
+
+// 游戏服务异常中止
+func (s *Player) resultPlayerKickedGameNotify(msg any, peer conn.Session) {
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gameserv.MSG_S2C_UserEnterMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", &rspdata)
+		if rspdata.RetCode == 0 {
+			ctx := peer.GetContext("ctx").(*global.Ctx)
+			task.After(time.Duration(config.Config.Client.Interval[1])*time.Second, cb.NewFunctor10(func(args any) {
+				handler.ReqPlayingGameInfo(peer, args.(int64))
+			}, ctx.UserId))
+		}
+	}
+}
+
 func (s *Player) resultPlayerLogin(msg any, peer conn.Session) {
+	defer safe.Catch()
 	switch b := msg.(type) {
 	case []byte:
 		rspdata := gamehall.LoginMessageResponse{}
@@ -128,17 +316,29 @@ func (s *Player) resultPlayerLogin(msg any, peer conn.Session) {
 			ctx.Score = rspdata.Score
 			ctx.GamePass = rspdata.GamePass
 			ctx.AgentId = rspdata.AgentId
-			task.After(global.Interval, cb.NewFunctor10(func(args any) {
-				handler.SendKeepAlive(peer, args.(string))
+			// logs.Debugf("token >>> %s", ctx.Token)
+			task.After(time.Duration(config.Config.Client.Interval[0])*time.Second, cb.NewFunctor10(func(args any) {
+				handler.SendKeepAlive(peer, args.(string), false)
 			}, ctx.Token))
-			handler.ReqGameListInfo(peer)
+			flag := 0
+			switch flag {
+			case 0:
+				handler.ReqGameListInfo(peer, ctx.UserId)
+			default:
+				handler.ReqGetMyClubListHall(peer, ctx.UserId)
+			}
+		} else if rspdata.RetCode == 1 {
+			//登陆游戏网关token失效，需要重新拉取平台token
+			s.retry(peer)
 		} else {
+			logs.Errorf("close...")
 			peer.Close()
 		}
 	}
 }
 
 func (s *Player) resultGameListInfo(msg any, peer conn.Session) {
+	defer safe.Catch()
 	switch b := msg.(type) {
 	case []byte:
 		rspdata := gamehall.GetGameMessageResponse{}
@@ -146,17 +346,65 @@ func (s *Player) resultGameListInfo(msg any, peer conn.Session) {
 		if err != nil {
 			panic(err.Error())
 		}
-		logs.Infof("...")
-		// logs.Infof("%v", json.String(&rspdata))
 		if rspdata.RetCode == 0 {
-			handler.ReqPlayingGameInfo(peer)
+			ctx := peer.GetContext("ctx").(*global.Ctx)
+			switch rspdata.Type {
+			case int32(global.Match):
+				//logs.Infof("%v", json.String(&rspdata))
+				handler.ReqPlayingGameInfo(peer, ctx.UserId)
+			case int32(global.Friend):
+			case int32(global.Club):
+				logs.Infof("%v", json.String(&rspdata))
+				//handler.ReqPlayingGameInfo(peer)
+				task.After(time.Duration(config.Config.Client.Interval[3])*time.Second, cb.NewFunctor20(func(args ...any) {
+					handler.ReqGameListInfoClub(peer, args[0].(int64), args[1].(int64))
+				}, ctx.UserId, ctx.ClubId))
+			}
 		} else {
+			logs.Errorf("close...")
 			peer.Close()
 		}
 	}
 }
 
+func (s *Player) reusultPlayerGetRoomInfoClub(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gamehallclub.GetRoomInfoMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", json.String(&rspdata))
+		if rspdata.RetCode == 0 {
+			switch rspdata.Info {
+			case nil:
+			default:
+				if len(rspdata.Info.Games) > 0 {
+					if len(rspdata.Info.Games[0].Rooms) > 0 {
+						if len(rspdata.Info.Games[0].Rooms[0].Tables) > 0 {
+							ctx := peer.GetContext("ctx").(*global.Ctx)
+							table := rspdata.Info.Games[0].Rooms[0].Tables[0]
+							handler.ReqValidateGameserverInfoClub(peer, ctx.UserId,
+								rspdata.Info.ClubId,
+								rspdata.Info.Games[0].GameId,
+								rspdata.Info.Games[0].Rooms[0].RoomId, table.NodeId, table.TableId)
+							return
+						}
+					}
+				}
+			}
+			ctx := peer.GetContext("ctx").(*global.Ctx)
+			task.After(time.Duration(config.Config.Client.Interval[3])*time.Second, cb.NewFunctor20(func(args ...any) {
+				handler.ReqGetRoomInfoClub(peer, args[0].(int64), args[1].(int64), 0, 0)
+			}, ctx.UserId, ctx.ClubId))
+		}
+	}
+}
+
 func (s *Player) resultPlayingGameInfo(msg any, peer conn.Session) {
+	defer safe.Catch()
 	switch b := msg.(type) {
 	case []byte:
 		rspdata := gamehall.GetPlayingGameInfoMessageResponse{}
@@ -165,22 +413,36 @@ func (s *Player) resultPlayingGameInfo(msg any, peer conn.Session) {
 			panic(err.Error())
 		}
 		logs.Infof("%v", json.String(&rspdata))
+		ctx := peer.GetContext("ctx").(*global.Ctx)
 		if rspdata.RetCode == 0 {
-			ctx := peer.GetContext("ctx").(*global.Ctx)
-			handler.ReqEnterRoom(peer,
-				int32(rspdata.GameId),
-				int32(rspdata.RoomId), ctx.GamePass[:])
+			handler.ReqEnterRoom(peer, ctx.UserId,
+				rspdata.GameId,
+				rspdata.RoomId, ctx.GamePass[:])
 		} else if rspdata.RetCode == 1 {
-			handler.ReqGameserverInfo(peer,
-				global.GGames.ByName["十三水"].ID,
-				global.GGames.ByName["十三水"].ByName["体验房"])
+			switch ctx.ClubId {
+			case 0:
+				handler.ReqGameserverInfo(peer, ctx.UserId,
+					global.GGames.ByName["十三水"].ID,
+					global.GGames.ByName["十三水"].ByName["体验房"])
+			default:
+				if ctx.Account == "test_2" || ctx.Account == "test_3" || ctx.Account == "test_4" {
+					handler.ReqGetRoomInfoClub(peer, ctx.UserId, ctx.ClubId, 0, 0)
+				} else {
+					handler.ReqGameserverInfoClub(peer, ctx.UserId,
+						ctx.ClubId,
+						global.GGames.ByName["十三水"].ID,
+						global.GGames.ByName["十三水"].ByName["1角"])
+				}
+			}
 		} else {
+			logs.Errorf("close...")
 			peer.Close()
 		}
 	}
 }
 
 func (s *Player) resultGameserverInfo(msg any, peer conn.Session) {
+	defer safe.Catch()
 	switch b := msg.(type) {
 	case []byte:
 		rspdata := gamehall.GetGameServerMessageResponse{}
@@ -191,16 +453,59 @@ func (s *Player) resultGameserverInfo(msg any, peer conn.Session) {
 		logs.Infof("%v", json.String(&rspdata))
 		if rspdata.RetCode == 0 {
 			ctx := peer.GetContext("ctx").(*global.Ctx)
-			ctx.GameId = int32(rspdata.GameId)
-			ctx.RoomId = int32(rspdata.RoomId)
-			handler.ReqEnterRoom(peer, ctx.GameId, ctx.RoomId, ctx.GamePass[:])
+			ctx.GameId = rspdata.GameId
+			ctx.RoomId = rspdata.RoomId
+			switch rspdata.Type {
+			default:
+			case int32(global.Match):
+				handler.ReqEnterRoom(peer, ctx.UserId, ctx.GameId, ctx.RoomId, ctx.GamePass[:])
+			case int32(global.Friend):
+			case int32(global.Club):
+				if rspdata.ClubId > 0 {
+					handler.ReqEnterRoomClub(peer, ctx.UserId,
+						rspdata.ClubId,
+						rspdata.GameId,
+						rspdata.RoomId,
+						rspdata.TableId,
+						rspdata.ServId,
+						ctx.GamePass[:])
+				}
+			}
 		} else {
+			logs.Errorf("close...")
 			peer.Close()
 		}
 	}
 }
 
 func (s *Player) resultPlayerEnterRoom(msg any, peer conn.Session) {
+	defer safe.Catch()
+	switch b := msg.(type) {
+	case []byte:
+		rspdata := gameserv.MSG_S2C_UserEnterMessageResponse{}
+		err := proto.Unmarshal(b, &rspdata)
+		if err != nil {
+			panic(err.Error())
+		}
+		logs.Infof("%v", &rspdata)
+		ctx := peer.GetContext("ctx").(*global.Ctx)
+		if rspdata.RetCode == 0 {
+			handler.ReqPlayerReady(peer, ctx.UserId)
+			task.After(time.Duration(config.Config.Client.Interval[0])*time.Second, cb.NewFunctor10(func(args any) {
+				handler.SendKeepAlive(peer, args.(string), true)
+			}, ctx.Token))
+		} else {
+			task.After(time.Duration(config.Config.Client.Interval[1])*time.Second, cb.NewFunctor00(func() {
+				handler.ReqGameserverInfo(peer, ctx.UserId,
+					global.GGames.ByName["十三水"].ID,
+					global.GGames.ByName["十三水"].ByName["体验房"])
+			}))
+		}
+	}
+}
+
+func (s *Player) resultPlayerEnterRoomClub(msg any, peer conn.Session) {
+	defer safe.Catch()
 	switch b := msg.(type) {
 	case []byte:
 		rspdata := gameserv.MSG_S2C_UserEnterMessageResponse{}
@@ -210,13 +515,20 @@ func (s *Player) resultPlayerEnterRoom(msg any, peer conn.Session) {
 		}
 		logs.Infof("%v", &rspdata)
 		if rspdata.RetCode == 0 {
-			handler.ReqPlayerReady(peer)
+			ctx := peer.GetContext("ctx").(*global.Ctx)
+			handler.ReqPlayerReady(peer, ctx.UserId)
+			task.After(time.Duration(config.Config.Client.Interval[0])*time.Second, cb.NewFunctor10(func(args any) {
+				handler.SendKeepAlive(peer, args.(string), true)
+			}, ctx.Token))
 		} else {
-			peer.Close()
+			// task.After(time.Duration(config.Config.Client.Interval[1])*time.Second, cb.NewFunctor00(func() {
+			// 	handler.ReqGameserverInfo(peer,
+			// 		global.GGames.ByName["十三水"].ID,
+			// 		global.GGames.ByName["十三水"].ByName["体验房"])
+			// }))
 		}
 	}
 }
-
 func (s *Player) onPlayerEnterNotify(msg any, peer conn.Session) {
 	switch b := msg.(type) {
 	case []byte:
@@ -249,7 +561,7 @@ func (s *Player) onPlayerStatusNotify(msg any, peer conn.Session) {
 		if err != nil {
 			panic(err.Error())
 		}
-		logs.Infof("%v", json.String(&rspdata))
+		// logs.Infof("%v", json.String(&rspdata))
 	}
 }
 
@@ -261,7 +573,7 @@ func (s *Player) resultPlayerReady(msg any, peer conn.Session) {
 		if err != nil {
 			panic(err.Error())
 		}
-		logs.Infof("%v", json.String(&rspdata))
+		// logs.Infof("%v", json.String(&rspdata))
 	}
 }
 
@@ -310,7 +622,7 @@ func (s *Player) onGameSceneFree(msg any, peer conn.Session) {
 		if err != nil {
 			panic(err.Error())
 		}
-		logs.Infof("%v", &rspdata)
+		// logs.Infof("%v", &rspdata)
 	}
 }
 
@@ -1026,6 +1338,17 @@ func (s *Player) onOtherPlaceJetSuccessBcbm(msg any, peer conn.Session) {
 }
 
 func (s *Player) RegisterModuleHandler(handlers cb.CmdCallbacks) {
+	handlers[uint32(packet.Enword(17, 76))] = s.resultPlayerCreateClub
+	handlers[uint32(packet.Enword(17, 12))] = s.resultPlayerGetMyClubListHall
+	handlers[uint32(packet.Enword(17, 14))] = s.resultPlayerJoinClub
+	handlers[uint32(packet.Enword(17, 16))] = s.resultPlayerExitClub
+	handlers[uint32(packet.Enword(17, 72))] = s.resultPlayerFireClubUser
+	handlers[uint32(packet.Enword(17, 78))] = s.reusultPlayerGetRoomInfoClub
+	handlers[uint32(packet.Enword(1, 9))] = s.resultPlayerShutDownNotify
+	handlers[uint32(packet.Enword(1, 11))] = s.resultPlayerOrderScoreNotify
+	handlers[uint32(packet.Enword(1, 12))] = s.resultPlayerSendFailedNotify
+	handlers[uint32(packet.Enword(7, 4))] = s.resultPlayerGameEndNotify
+	handlers[uint32(packet.Enword(1, 4))] = s.resultPlayerKickedGameNotify
 	handlers[uint32(packet.Enword(2, 4))] = s.resultPlayerLogin
 	// handlers[uint32(packet.Enword(2, 2))] = s.resultKeepAlive
 	// handlers[uint32(packet.Enword(3, 2))] = s.resultKeepAlive
@@ -1033,6 +1356,7 @@ func (s *Player) RegisterModuleHandler(handlers cb.CmdCallbacks) {
 	handlers[uint32(packet.Enword(2, 8))] = s.resultGameserverInfo
 	handlers[uint32(packet.Enword(2, 10))] = s.resultPlayingGameInfo
 	handlers[uint32(packet.Enword(3, 4))] = s.resultPlayerEnterRoom
+	handlers[uint32(packet.Enword(18, 4))] = s.resultPlayerEnterRoomClub
 	handlers[uint32(packet.Enword(3, 5))] = s.onPlayerEnterNotify
 	handlers[uint32(packet.Enword(3, 6))] = s.onPlayerScoreNotify
 	handlers[uint32(packet.Enword(3, 7))] = s.onPlayerStatusNotify
@@ -1040,7 +1364,7 @@ func (s *Player) RegisterModuleHandler(handlers cb.CmdCallbacks) {
 	handlers[uint32(packet.Enword(3, 10))] = s.resultPlayerLeave
 	// handlers[uint32(packet.Enword(2, 66))] = s.resultOrderNotify
 	// handlers[uint32(packet.Enword(1, 11))] = s.resultProxyOrderNotify
-	switch int32(global.SubGameId) {
+	switch int32(config.Config.Client.GameId) {
 	case global.GGames.ByName["十三水"].ID:
 		{
 			handlers[uint32(packet.Enword(4, 201))] = s.onGameSceneFree

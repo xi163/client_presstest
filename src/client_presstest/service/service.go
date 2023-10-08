@@ -3,9 +3,9 @@ package service
 import (
 	"time"
 
-	"github.com/xi163/libgo/core/base/mailbox"
-	"github.com/xi163/libgo/core/base/pipe"
-	"github.com/xi163/libgo/core/base/run/cell"
+	"github.com/cwloo/gonet/core/base/mailbox"
+	"github.com/cwloo/gonet/core/base/pipe"
+	"github.com/cwloo/gonet/core/base/run/cell"
 )
 
 var Main = NewService("client.service")

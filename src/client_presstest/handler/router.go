@@ -21,14 +21,13 @@ import (
 	"github.com/cwloo/presstest/src/global"
 )
 
-func BuildPlatLogin(account string, Type int) (key, param string) {
-	req := global.LoginParam{
-		Account:   account,
+func BuildRouter(node string, Type int) (key, param string) {
+	req := global.RouterParam{
+		Node:      node,
 		Type:      Type,
 		Timestamp: time.Now().Unix(),
 	}
-	key = md5.Md5(fmt.Sprintf("%v%v%v%v", req.Account, req.Type, req.Timestamp, config.Config.Client.Md5Key), true)
-	// rawParam := fmt.Sprintf("account=%v&type=%v&timestamp=%v", req.Account, req.Type, req.Timestamp)
+	key = md5.Md5(fmt.Sprintf("%v%v%v%v", req.Node, req.Type, req.Timestamp, config.Config.Client.Md5Key), true)
 	rawParam := json.String(req)
 	// logs.Infof("rawParam >>>>  %s", rawParam)
 	encrypt := aes.ECBEncryptPKCS7([]byte(rawParam), []byte(config.Config.Client.AesKey), []byte(config.Config.Client.AesKey))
@@ -39,7 +38,7 @@ func BuildPlatLogin(account string, Type int) (key, param string) {
 	return
 }
 
-func SendPlatLogin(httpaddr string, key, param string) (token, ipaddr, domain string) {
+func SendRouter(httpaddr string, key, param string) (ipaddr, domain string) {
 	defer safe.Catch()
 	vec := strings.Split(httpaddr, "//")
 	if len(vec) != 2 {
@@ -47,7 +46,7 @@ func SendPlatLogin(httpaddr string, key, param string) (token, ipaddr, domain st
 	}
 	proto := strings.Trim(vec[0], ":")
 	host := vec[1]
-	requrl := fmt.Sprintf("%v://%v/opt/login?key=%v", proto, host, key)
+	requrl := fmt.Sprintf("%v://%v/opt/router?key=%v", proto, host, key)
 	body, err := httpcli.Post(requrl, global.Request{Key: key, Param: param}, 5, httpcli.New(5))
 	if err != nil {
 		logs.Errorf("%v", err.Error())
@@ -77,39 +76,38 @@ func SendPlatLogin(httpaddr string, key, param string) (token, ipaddr, domain st
 			logs.Errorf("%v", json.String(result))
 			return
 		}
-		res := global.LoginResult{}
+		res := global.RouterResult{}
 		err := json.MapToStruct(v, &res)
 		if err != nil {
 			logs.Errorf("%v", json.String(result))
 			return
 		}
-		token = data["token"].(string)
 		i := rand.Int() % len(res.Data)
-		minLoads := 0
-		for k := range res.Data {
-			switch k {
-			case 0:
-				i = 0
-				minLoads = res.Data[k].NumOfLoads
-			default:
-				if minLoads > res.Data[k].NumOfLoads {
-					i = k
-					minLoads = res.Data[k].NumOfLoads
-				}
-			}
-		}
+		// minLoads := 0
+		// for k := range res.Data {
+		// 	switch k {
+		// 	case 0:
+		// 		i = 0
+		// 		minLoads = res.Data[k].NumOfLoads
+		// 	default:
+		// 		if minLoads > res.Data[k].NumOfLoads {
+		// 			i = k
+		// 			minLoads = res.Data[k].NumOfLoads
+		// 		}
+		// 	}
+		// }
 		ipaddr = res.Data[i].Host
 		domain = res.Data[i].Domain
-		logs.Debugf("loginRes => %v", json.String(res))
+		logs.Debugf("routerRes => %v", json.String(res))
 	default:
 		logs.Errorf("error")
 	}
 	return
 }
 
-func GetPlatToken(httpaddr string, account string, Type int) (token, ipaddr, domain string) {
+func GetRouter(httpaddr string, node string, Type int) (ipaddr, domain string) {
 	defer safe.Catch()
-	key, param := BuildPlatLogin(account, Type)
-	token, ipaddr, domain = SendPlatLogin(httpaddr, key, param)
+	key, param := BuildRouter(node, Type)
+	ipaddr, domain = SendRouter(httpaddr, key, param)
 	return
 }
